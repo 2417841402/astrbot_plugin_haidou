@@ -1,0 +1,23 @@
+{
+  "rank_top_n": {
+    "description": "英雄胜率榜最多展示的英雄数量",
+    "type": "int",
+    "default": 60,
+    "hint": "按梯队分组展示，建议 40~90"
+  },
+  "augment_top_n": {
+    "description": "海克斯强度榜最多展示的强化数量",
+    "type": "int",
+    "default": 30
+  },
+  "hero_aug_top_n": {
+    "description": "单英雄适配榜展示的强化数量",
+    "type": "int",
+    "default": 10
+  },
+  "timeout": {
+    "description": "接口请求超时（秒）",
+    "type": "int",
+    "default": 25
+  }
+}

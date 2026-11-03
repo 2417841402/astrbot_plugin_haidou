@@ -1,0 +1,5 @@
+name: astrbot_plugin_haidou
+desc: 英雄联盟海克斯大乱斗（海斗）数据查询：英雄胜率榜、单英雄海克斯适配榜、海克斯强度榜。数据源为掌盟官方接口，无需任何密钥。
+version: v1.1.0
+author: 2417841402
+repo: https://github.com/2417841402/astrbot_plugin_haidou
