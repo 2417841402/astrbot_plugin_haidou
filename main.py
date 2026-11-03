@@ -370,8 +370,8 @@ class HaidouPlugin(Star):
     ) -> str:
         """查询英雄联盟海克斯大乱斗（海斗/极地大乱斗强化）数据。action 取值: "rank"=英雄胜率榜; "hero"=按英雄名查胜率与推荐海克斯; "augment"=按海克斯名查强度与适配英雄。
         Args:
-            action: 查询类型，可选 rank / hero / augment
-            keyword: 英雄名或海克斯名；action 为 rank 时留空
+            action(string): 查询类型，可选 rank / hero / augment
+            keyword(string): 英雄名或海克斯名；action 为 rank 时留空
         """
         try:
             if action == "rank":
