@@ -41,7 +41,7 @@ DETAIL_TTL = 12 * 3600
     "astrbot_plugin_haidou",
     "Matsuko",
     "英雄联盟海克斯大乱斗（海斗）查询：英雄胜率榜、单英雄海克斯适配榜、海克斯强度榜",
-    "1.0.0",
+    "1.2.0",
 )
 class HaidouPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
