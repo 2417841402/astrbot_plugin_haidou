@@ -362,6 +362,86 @@ class HaidouPlugin(Star):
             logger.error(f"haidou augs: {traceback_exc()}")
             yield event.plain_result(f"海斗数据查询失败了：{e}")
 
+    # ---------------- llm tool ----------------
+
+    @filter.llm_tool(name="haidou_query")
+    async def haidou_query(
+        self, event: AstrMessageEvent, action: str, keyword: str = ""
+    ) -> str:
+        """查询英雄联盟海克斯大乱斗（海斗/极地大乱斗强化）数据。action 取值: "rank"=英雄胜率榜; "hero"=按英雄名查胜率与推荐海克斯; "augment"=按海克斯名查强度与适配英雄。
+        Args:
+            action: 查询类型，可选 rank / hero / augment
+            keyword: 英雄名或海克斯名；action 为 rank 时留空
+        """
+        try:
+            if action == "rank":
+                ds, heroes = await self._get_hero_rank()
+                meta = await self._get_hero_meta()
+                lines = [f"海斗英雄胜率榜（{self._fmt_date(ds)}，前15）："]
+                for h in sorted(heroes, key=lambda x: x["rank"])[:15]:
+                    m = meta.get(h["champ_id"], {})
+                    name = m.get("title") or m.get("name") or h["champ_id"]
+                    lines.append(
+                        f"{h['rank']}. {name} 胜率{h['win'] * 100:.1f}% 选取{h['pick'] * 100:.1f}%"
+                    )
+                return "\n".join(lines)
+            if action == "hero":
+                hero = await self._find_hero(keyword)
+                if not hero:
+                    return f"没找到英雄「{keyword}」"
+                champ_id = int(hero["heroId"])
+                _, heroes = await self._get_hero_rank()
+                mine = next((h for h in heroes if h["champ_id"] == champ_id), None)
+                detail = await self._get_hero_detail(champ_id)
+                aug_meta = await self._get_augment_meta()
+                lines = [f"{hero.get('title', '')}{hero.get('name', '')}（海斗）"]
+                if mine:
+                    lines.append(
+                        f"官方排名 {mine['rank']}，胜率 {mine['win'] * 100:.1f}%，选取率 {mine['pick'] * 100:.1f}%"
+                    )
+                else:
+                    lines.append("当前不在胜率统计中")
+                augs = detail["augs"][:8]
+                if augs:
+                    lines.append("推荐海克斯（按选取率）：")
+                    for a in augs:
+                        m = aug_meta.get(a["aug_id"], {})
+                        lines.append(
+                            f"- {m.get('name_cn', a['aug_id'])}（{LEVEL_CN.get(m.get('level', ''), '')}）"
+                            f" 选取{a['pick'] * 100:.1f}% 评级{a['grade']}"
+                        )
+                return "\n".join(lines)
+            if action == "augment":
+                hit = await self._find_augment(keyword)
+                if not hit:
+                    return f"没找到海克斯「{keyword}」"
+                stat, meta = hit
+                _, augs = await self._get_rune_rank()
+                hero_meta = await self._get_hero_meta()
+                rank = (
+                    sorted((a["win"] for a in augs), reverse=True).index(stat["win"])
+                    + 1
+                )
+                avg = sum(a["win"] for a in augs) / max(1, len(augs))
+                best = "、".join(
+                    (
+                        hero_meta.get(cid, {}).get("title")
+                        or hero_meta.get(cid, {}).get("name")
+                        or "?"
+                    )
+                    for cid in stat["best_heroes"]
+                )
+                level = LEVEL_CN.get(meta.get("level", ""), meta.get("level", ""))
+                return (
+                    f"{meta.get('name_cn', keyword)}（{level}）："
+                    f"胜率 {stat['win'] * 100:.1f}%（全体第 {rank}/{len(augs)}，平均 {avg * 100:.1f}%），"
+                    f"选取率 {stat['pick'] * 100:.1f}%，最适配英雄：{best}"
+                )
+            return "action 只支持 rank / hero / augment"
+        except Exception as e:
+            logger.error(f"haidou llm_tool: {traceback_exc()}")
+            return f"查询失败: {e}"
+
     # ---------------- cards ----------------
 
     async def _augment_view(self, query: str = "") -> Path:
